@@ -73,6 +73,9 @@ export class Lexer {
             case ">":
                 token = newToken(Tokens.GT, this.ch)
                 break;
+            case '"':
+                token = newToken(Tokens.STRING, this.readString())
+                break;
             case "":
                 token = newToken(Tokens.EOF, "");
                 break;
@@ -150,6 +153,16 @@ export class Lexer {
         while (/\s/.test(this.ch)) {
             this.readChar();
         }
+    }
+
+    private readString = () => {
+        const position = this.position + 1;
+        this.readChar();
+        while (this.ch !== '"' && this.ch !== "") {
+            this.readChar();
+
+        }
+        return this.input.slice(position, this.position);
     }
 }
 

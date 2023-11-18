@@ -1,5 +1,25 @@
 import { Token } from "../lexer";
 
+export const NodeTypes = {
+    Program: "program",
+    LetStatement: "let statement",
+    IntegerLiteral: "integer literal",
+    StringLiteral: "string literal",
+    BooleanLiteral: "boolean literal",
+    BlockStatement: "block statement",
+    ReturnStatement: "return statement",
+    ExpressionStatement: "expression statement",
+    IfExpression: "if expression",
+    Identifier: "identifier",
+    PrefixExpression: "prefix expression",
+    InfixExpression: "infix expression",
+    FunctionLiteral: "function literal",
+    CallExpression: "call expression",
+} as const;
+
+export type OBJECT_TYPES = (typeof NodeTypes)[keyof typeof NodeTypes];
+export type MNode = Program | LetStatement | IntegerLiteral | BooleanLiteral | BlockStatement | ReturnStatement | ExpressionStatement | IfExpression | Identifier | PrefixExpression | InfixExpression | FunctionLiteral | CallExpression | StringLiteral;
+
 export interface Node {
     tokenLiteral(): string;
     asString(): string;
@@ -12,6 +32,7 @@ export interface Expression extends Node {
 }
 
 export class Program implements Node {
+    readonly type = NodeTypes.Program;
     statements: Statement[] = [];
     tokenLiteral(): string {
         if (this.statements.length > 0) {
@@ -28,7 +49,7 @@ export class Program implements Node {
 }
 
 export class LetStatement implements Statement {
-
+    readonly type = NodeTypes.LetStatement
     name: Identifier | undefined;
     value: Expression | undefined;
 
@@ -54,6 +75,8 @@ export class LetStatement implements Statement {
 }
 
 export class Identifier implements Expression {
+    readonly type = NodeTypes.Identifier;
+
     constructor(
         private token: Token,
         public value: string
@@ -68,8 +91,9 @@ export class Identifier implements Expression {
 }
 
 export class ReturnStatement implements Statement {
-    public returnValue: Expression | undefined
+    readonly type = NodeTypes.ReturnStatement;
 
+    public returnValue: Expression | undefined
     constructor(
         private token: Token,
     ) { }
@@ -88,6 +112,8 @@ export class ReturnStatement implements Statement {
 }
 
 export class ExpressionStatement implements Statement {
+    readonly type = NodeTypes.ExpressionStatement;
+
     public expression: Expression | undefined;
     constructor(
         private token: Token,
@@ -105,8 +131,8 @@ export class ExpressionStatement implements Statement {
 }
 
 export class IntegerLiteral implements Expression {
-    public value: number | undefined;
-    constructor(private token: Token) { }
+    readonly type = NodeTypes.IntegerLiteral;
+    constructor(private token: Token, public value: number) { }
     tokenLiteral(): string {
         return this.token.literal;
     }
@@ -116,8 +142,21 @@ export class IntegerLiteral implements Expression {
     expressionNode(): void { }
 }
 
+export class StringLiteral implements Expression {
+    readonly type = NodeTypes.StringLiteral;
+    constructor(private token: Token, public value: string) { }
+    tokenLiteral(): string {
+        return this.token.literal;
+    }
+    asString(): string {
+        return this.token.literal;
+    }
+    expressionNode(): void { }
+}
 
 export class PrefixExpression implements Expression {
+    readonly type = NodeTypes.PrefixExpression;
+
     public operator: string | undefined;
     public right: Expression | undefined;
     constructor(private token: Token) { }
@@ -136,6 +175,8 @@ export class PrefixExpression implements Expression {
 }
 
 export class InfixExpression implements Expression {
+    readonly type = NodeTypes.InfixExpression;
+
     public left: Expression | undefined;
     public operator: string | undefined;
     public right: Expression | undefined;
@@ -156,6 +197,8 @@ export class InfixExpression implements Expression {
 }
 
 export class IfExpression implements Expression {
+    readonly type = NodeTypes.IfExpression;
+
     public condition: Expression | undefined;
     public consequence: BlockStatement | undefined;
     public alternative: BlockStatement | undefined;
@@ -177,6 +220,8 @@ export class IfExpression implements Expression {
 }
 
 export class FunctionLiteral implements Expression {
+    readonly type = NodeTypes.FunctionLiteral;
+
     public parameters: Identifier[] = [];
     public body: BlockStatement | undefined;
     constructor(private token: Token) { }
@@ -197,6 +242,8 @@ export class FunctionLiteral implements Expression {
 
 
 export class BlockStatement implements Statement {
+    readonly type = NodeTypes.BlockStatement;
+
     statements: Statement[] = [];
     constructor(private token: Token) { }
     tokenLiteral(): string {
@@ -209,6 +256,8 @@ export class BlockStatement implements Statement {
 }
 
 export class CallExpression implements Expression {
+    readonly type = NodeTypes.CallExpression;
+
     public function: Expression | undefined;
     public arguments: Expression[] = [];
     constructor(private token: Token) { }
@@ -228,7 +277,9 @@ export class CallExpression implements Expression {
 }
 
 export class BooleanLiteral implements Expression {
-    constructor(private token: Token, public value: Boolean) { }
+    readonly type = NodeTypes.BooleanLiteral;
+
+    constructor(private token: Token, public value: boolean) { }
     tokenLiteral(): string {
         return this.token.literal;
     }

@@ -4,6 +4,9 @@ import { Lexer } from "./lexer";
 import { Parser } from "./parser/parser";
 import { inspect } from "util";
 import { mEval } from "./evaluator/evaluator";
+import { Environment } from "./evaluator/environment";
+
+const env = new Environment();
 console.log("Starting");
 console.log(">>")
 
@@ -22,8 +25,9 @@ const handleLine = (data: string) => {
         } else {
             console.log(inspect(program, { depth: 10 }));
             console.log(program.asString());
-            const obj = mEval(program);
+            const obj = mEval(program, env);
             console.log(`result ${JSON.stringify(obj)}`);
+            console.log(`result val ${obj.inspect()}`);
         }
 
     }

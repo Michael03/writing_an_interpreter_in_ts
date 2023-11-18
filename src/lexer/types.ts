@@ -5,6 +5,7 @@ export const Tokens = {
     // Identifiers
     IDENT: "IDENT",
     INT: "INT",
+    STRING: "STRING",
 
     // Operators
     ASSIGN: "=",

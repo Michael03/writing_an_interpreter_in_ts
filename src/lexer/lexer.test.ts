@@ -38,6 +38,8 @@ test("lexes simple code correctly", () => {
     5 < 10 > 5;
     10 == 5;
     10 != 5;
+    "foobar";
+    "foo bar";
     `;
     const expected: Token[] = [
         { type: Tokens.LET, literal: "let" },
@@ -98,7 +100,11 @@ test("lexes simple code correctly", () => {
         { type: Tokens.EQ, literal: "!=" },
         { type: Tokens.INT, literal: "5" },
         { type: Tokens.SEMICOLON, literal: ";" },
-        
+        { type: Tokens.STRING, literal: "foobar" },
+        { type: Tokens.SEMICOLON, literal: ";" },
+        { type: Tokens.STRING, literal: "foo bar" },
+        { type: Tokens.SEMICOLON, literal: ";" },
+
         { type: Tokens.EOF, literal: "" },
     ];
     let lexer = new Lexer(input);

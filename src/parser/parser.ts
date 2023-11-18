@@ -1,6 +1,6 @@
 import { Lexer, TokenType } from "../lexer";
 import { Token, Tokens } from "../lexer";
-import { Expression, ExpressionStatement, Identifier, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, Program, ReturnStatement, Statement, BooleanLiteral, IfExpression, BlockStatement, FunctionLiteral, CallExpression } from "./ast";
+import { Expression, ExpressionStatement, Identifier, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, Program, ReturnStatement, Statement, BooleanLiteral, IfExpression, BlockStatement, FunctionLiteral, CallExpression, StringLiteral } from "./ast";
 
 const PRECEDENCE = {
     _: 0,
@@ -44,6 +44,7 @@ export class Parser {
         this.prefixParseFn[Tokens.LPAREN] = this.parseGroupedExpression;
         this.prefixParseFn[Tokens.IF] = this.parseIfExpression;
         this.prefixParseFn[Tokens.FUNCTION] = this.parseFunctionLiteral;
+        this.prefixParseFn[Tokens.STRING] = this.parseStringLiteral;
 
         this.infixParseFn[Tokens.PLUS] = this.parseInfixExpression;
         this.infixParseFn[Tokens.MINUS] = this.parseInfixExpression;
@@ -124,11 +125,13 @@ export class Parser {
     private parseExpression(precedence: number): Expression | undefined {
         const prefix = this.prefixParseFn[this.currentToken.type];
         if (prefix == null) {
+
             this.noPrefixParseFnError(this.currentToken.type);
             return undefined;
         }
         let leftExp = prefix();
         while (!this.peekTokenIs(Tokens.SEMICOLON) && precedence < this.peekPrecedence()) {
+
             let infixFn = this.infixParseFn[this.peekToken.type];
             if (!infixFn) {
                 return leftExp;
@@ -144,13 +147,15 @@ export class Parser {
     }
 
     private parseIntegerLiteral = () => {
-        const literal = new IntegerLiteral(this.currentToken);
         const val = Number.parseInt(this.currentToken.literal, 10);
         if (Number.isNaN(val)) {
-            this.errors.push(`Could not parse ${literal} as number`);
+            this.errors.push(`Could not parse ${this.currentToken} as number`);
         }
-        literal.value = val;
-        return literal;
+        return new IntegerLiteral(this.currentToken, val);
+    }
+
+    private parseStringLiteral = () => {
+        return new StringLiteral(this.currentToken, this.currentToken.literal);
     }
 
     private parseBooleanLiteral = () => {
@@ -212,6 +217,7 @@ export class Parser {
         const block = new BlockStatement(this.currentToken);
         this.nextToken();
         while (!this.currTokenIs(Tokens.RBRACE) && !this.currTokenIs(Tokens.EOF)) {
+            console.log("1")
             const stmt = this.parseStatement();
             if (stmt !== null) {
                 block.statements.push(stmt);
@@ -245,6 +251,8 @@ export class Parser {
             identifiers.push(new Identifier(this.currentToken, this.currentToken.literal));
 
         while (this.peekTokenIs(Tokens.COMMA)) {
+            console.log("2")
+
             this.nextToken();
             this.nextToken();
             identifiers.push(new Identifier(this.currentToken, this.currentToken.literal));
@@ -279,6 +287,8 @@ export class Parser {
         }
         args.push(arg);
         while (this.peekTokenIs(Tokens.COMMA)) {
+            console.log("3")
+
             this.nextToken();
             this.nextToken();
             arg = this.parseExpression(PRECEDENCE.LOWEST);
