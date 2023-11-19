@@ -1,5 +1,6 @@
 import { MBoolean, MError, MFunction, MInteger, MNull, MObject, MReturn, MString, ObjectTypes } from "../object/object";
 import { Node, MNode, NodeTypes, Statement, IfExpression, Expression, LetStatement, Identifier, FunctionLiteral } from "../parser/ast";
+import { builtin } from "./builtin";
 import { Environment } from "./environment";
 const TRUE = new MBoolean(true);
 const FALSE = new MBoolean(false);
@@ -75,10 +76,16 @@ export function mEval(node: Node | MNode | undefined, env: Environment): MObject
 
 function evalIdentifier(node: Identifier, env: Environment): MObject {
     const val = env.get(node.value);
-    if (val === undefined) {
-        return new MError(`identifier not found: ${node.value}`);
+    if (val !== undefined) {
+        return val;
     }
-    return val;
+    console.log(node.value);
+    console.log(builtin)
+    if (node.value in builtin) {
+        console.log("here");
+        return builtin[(node.value as keyof typeof builtin)];
+    }
+    return new MError(`identifier not found: ${node.value}`);
 }
 
 function evalBlockStatements(stmts: Statement[], env: Environment) {
@@ -124,6 +131,9 @@ function evalPrefixExpression(operator: string, right: MObject) {
 function evalInfixExpression(operator: string, left: MObject, right: MObject) {
     if (left.type !== right.type) {
         return new MError(`type mismatch: ${left.type} ${operator} ${right.type}`);
+    }
+    if (left.type === ObjectTypes.M_STRING && right.type === ObjectTypes.M_STRING) {
+        return evalStringInflixExpression(operator, left, right)
     }
     if (left.type === ObjectTypes.M_INTEGER && right.type === ObjectTypes.M_INTEGER) {
         return evalIntegerInflixExpression(operator, left, right);
@@ -175,6 +185,16 @@ function evalIntegerInflixExpression(operator: string, left: MInteger, right: MI
     return new MError(`unknown operator: ${left.type} ${operator} ${right.type}`);
 }
 
+function evalStringInflixExpression(operator: string, left: MString, right: MString): MObject {
+    const leftVal = left.value;
+    const rightVal = right.value;
+    switch (operator) {
+        case "+":
+            return new MString(leftVal + rightVal);
+    }
+    return new MError(`unknown operator: ${left.type} ${operator} ${right.type}`);
+}
+
 function evalFunctionLiteral(node: FunctionLiteral, env: Environment): MFunction {
     const func = new MFunction();
     func.parameters = node.parameters;
@@ -183,12 +203,16 @@ function evalFunctionLiteral(node: FunctionLiteral, env: Environment): MFunction
 }
 
 function applyFunction(func: MObject, args: MObject[]) {
-    if (func.type !== ObjectTypes.M_FUNCTION) {
-        return new MError(`not a function ${func.type}`);
+    if (func.type === ObjectTypes.M_FUNCTION) {
+        const extendedEnv = extendFunctionEnv(func, args);
+        const evaluated = mEval(func.body, extendedEnv);
+        return unwrapReturnedValue(evaluated);
     }
-    const extendedEnv = extendFunctionEnv(func, args);
-    const evaluated = mEval(func.body, extendedEnv);
-    return unwrapReturnedValue(evaluated);
+    if (func.type === ObjectTypes.M_BUILTIN) {
+        return func.fn(...args)
+    }
+    return new MError(`not a function ${func.type}`);
+
 }
 
 function evalBangOperatorExpression(right: MObject) {

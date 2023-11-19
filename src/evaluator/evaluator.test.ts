@@ -1,7 +1,7 @@
 import { test, expect } from "@jest/globals";
 import { Lexer } from "../lexer";
 import { Parser } from "../parser/parser";
-import { MFunction, MObject, ObjectTypes } from "../object/object";
+import { MError, MFunction, MObject, ObjectTypes } from "../object/object";
 import { NULL, mEval } from "./evaluator";
 import { Environment } from "./environment";
 
@@ -13,6 +13,17 @@ test("Eval integer expression", () => {
     for (const test of tests) {
         const evaluated = testEval(test.input);
         testIntegerObject(evaluated, test.expected);
+    }
+});
+
+test("Eval string concatenation expression", () => {
+    const input = '"Hello" + " " + "World!"';
+    const evaluated = testEval(input);
+    expect(evaluated.type).toBe(ObjectTypes.M_STRING);
+    if (evaluated.type === ObjectTypes.M_STRING) {
+        expect(evaluated.value).toBe("Hello World!");
+    } else {
+        throw new Error(`Not M_STRING ${evaluated}`);
     }
 });
 
@@ -177,7 +188,7 @@ test("Eval function object", () => {
     }
 });
 
-test.only("Eval function call", () => {
+test("Eval function call", () => {
     const tests = [
         { input: "let identity = fn(x) { x; }; identity(5);", expected: 5 },
     ];
@@ -186,6 +197,29 @@ test.only("Eval function call", () => {
         testIntegerObject(evaluated, test.expected);
     }
 });
+
+test.only("Eval builtin call", () => {
+    const tests = [
+        { input: 'len("")', expected: 0 },
+        { input: 'len("four")', expected: 5 },
+        // { input: 'len(4)', expected: "argument to `len` not supported, got MINTEGER" },
+        // { input: 'len("one", "two")', expected: "wrong number of arguments. got=2, want=1" },
+    ];
+    for (const test of tests) {
+        const evaluated = testEval(test.input);
+        console.log(evaluated);
+        switch (typeof test.expected) {
+            case "number":
+                testIntegerObject(evaluated, test.expected);
+                break;
+            case "string":
+                expect(evaluated.type).toBe(ObjectTypes.M_ERROR);
+                expect((evaluated as MError).value).toBe(test.expected);
+                break;
+        }
+    }
+});
+
 // Helpers
 const testEval = (input: string) => {
     const env = new Environment();

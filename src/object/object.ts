@@ -1,7 +1,7 @@
 import { Environment } from "../evaluator/environment";
 import { BlockStatement, Identifier } from "../parser/ast";
 
-export type MObject = MInteger | MBoolean | MNull | MReturn | MFunction | MError | MString;
+export type MObject = MInteger | MBoolean | MNull | MReturn | MFunction | MError | MString | MBuiltin;
 
 export const ObjectTypes = {
     M_INTEGER: "number",
@@ -11,6 +11,7 @@ export const ObjectTypes = {
     M_RETURN: "return",
     M_FUNCTION: "function",
     M_ERROR: "error",
+    M_BUILTIN: "builtin"
 } as const;
 
 export type OBJECT_TYPES = (typeof ObjectTypes)[keyof typeof ObjectTypes];
@@ -29,8 +30,6 @@ export class MString {
         return this.value;
     }
 }
-
-
 
 export class MBoolean {
     readonly type = ObjectTypes.M_BOOLEAN;
@@ -65,6 +64,14 @@ export class MFunction {
     constructor() { }
     inspect(): string {
         return `fn(${this.parameters.join(",")})\n{\n${this.body?.asString()}\n}`
+    }
+}
+
+export class MBuiltin {
+    readonly type = ObjectTypes.M_BUILTIN;
+    constructor(public fn: Function) {}
+    inspect(): string {
+        return `builtin function`
     }
 }
 
